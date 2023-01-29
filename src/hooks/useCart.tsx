@@ -23,28 +23,57 @@ const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
   const [cart, setCart] = useState<Product[]>(() => {
-    // const storagedCart = Buscar dados do localStorage
+    const storagedCart = localStorage.getItem('@RockeatShoes:cart')
 
-    // if (storagedCart) {
-    //   return JSON.parse(storagedCart);
-    // }
+    if (storagedCart) {
+      return JSON.parse(storagedCart);
+    }
 
     return [];
   });
 
   const addProduct = async (productId: number) => {
     try {
-      // TODO
+      const updatedCart = [...cart]; // pegando tudo de dentro do array original e incluindo em um novo array
+      const productExists = updatedCart.find(product => product.id === productId) //Buscando o Item dentro do array 
+
+      const stock = await api.get(`/stock/${productId}`);
+      const stockAmount = stock.data.amount;
+      const currentAmount = productExists ? productExists.amount : 0;
+      const amount = currentAmount + 1;
+
+      if (amount > stockAmount){
+        toast.error('Não temos mais desse produto em stock')
+        return;
+      }
+
+      if (productExists){
+        productExists.amount = amount //atualizar os produtos
+      }
+
+      else {
+        const product = await api.get(`/products/${productId}`)
+
+        const newProduct = {
+          ...product.data,
+          amount: 1
+        }
+        updatedCart.push(newProduct)
+      }
+
+      setCart(updatedCart);
+      localStorage.setItem('@RockeatShoes:cart', JSON.stringify(updatedCart))
+
     } catch {
-      // TODO
+      toast.error('Não foi possível incluir o produto, tente novamente mais tarde.')
     }
   };
 
   const removeProduct = (productId: number) => {
     try {
-      // TODO
+       
     } catch {
-      // TODO
+       
     }
   };
 
@@ -53,9 +82,9 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+       
     } catch {
-      // TODO
+       
     }
   };
 
